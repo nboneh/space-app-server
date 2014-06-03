@@ -12,6 +12,7 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.labs.repackaged.org.json.JSONArray;
 import com.google.appengine.labs.repackaged.org.json.JSONObject;
 import com.google.appengine.labs.repackaged.org.json.JSONException;
@@ -25,6 +26,7 @@ public class HighScore extends HttpServlet {
 	private static final long serialVersionUID = -3961076477647464957L;
 	static final String ENTITY_NAME = "HighScoreRecord";
 	static final String PASSWORD = "*******";
+	static final int numOfEntities = 5; 
 	
 	
 	@Override
@@ -32,11 +34,16 @@ public class HighScore extends HttpServlet {
 			throws IOException {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query(ENTITY_NAME);
+		query.addSort("score",SortDirection.DESCENDING );
 		PreparedQuery pq = datastore.prepare(query);
 		JSONObject jsonEntity = new JSONObject(); 
 		JSONArray jsonEntityArray = new JSONArray(); 
 
+		int i = 0; 
 		for (Entity result : pq.asIterable()) {
+			if( i >=  numOfEntities){
+				break; 
+			}
 			long score = (long) result.getProperty("score");
 			String name  = (String) result.getProperty("name");
 		
@@ -49,6 +56,7 @@ public class HighScore extends HttpServlet {
 				e.printStackTrace();
 			}
 			jsonEntity = new JSONObject(); 
+			i++;
 		}
 		
 	    try {
@@ -70,7 +78,7 @@ public class HighScore extends HttpServlet {
 
 			highscoreInst.setProperty("date", new Date(Long.parseLong(req.getParameter("date"))));
 			highscoreInst.setProperty("name", req.getParameter("name"));
-			highscoreInst.setProperty("score", Integer.parseInt("score"));
+			highscoreInst.setProperty("score", Long.parseLong(req.getParameter("score")));
 		
 			// Now put the entry to Google data store
 			DatastoreService datastore =
